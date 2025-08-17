@@ -16,9 +16,41 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Add upstream
+      - name: Set Git user
         run: |
-          git remote add upstream https://github.com/LibreSpark/LibreTV.git
-          git fetch upstream
-          git merge upstream/main --allow-unrelated-histories -m "🔄 Sync from upstream"
-          git push origin main
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Add upstream remote if not exists
+        run: |
+          git remote | grep upstream || git remote add upstream https://github.com/LibreSpark/LibreTV.git
+
+      - name: Fetch upstream changes
+        run: git fetch upstream
+
+      - name: Merge upstream/main into main
+        run: |
+          git merge --no-commit --no-ff upstream/main || true
+
+      - name: Check for merge conflicts
+        run: |
+          if git ls-files -u | grep .; then
+            echo "❌ Merge conflicts detected! Please resolve them manually."
+            exit 1
+          fi
+
+      - name: Commit merge if needed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -am "🔄 Sync from upstream"
+          else
+            echo "No changes to commit."
+          fi
+
+      - name: Push changes if any
+        run: |
+          if [ -n "$(git log origin/main..HEAD)" ]; then
+            git push origin main
+          else
+            echo "No changes to push."
+          fi
