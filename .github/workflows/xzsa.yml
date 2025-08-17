@@ -1,4 +1,4 @@
-name: Sync Upstream
+name: xzsa
 
 on:
   schedule:
